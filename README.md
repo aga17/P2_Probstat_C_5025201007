@@ -117,8 +117,121 @@ plotDist(dist = 't', df = 2, col = "blue")
 
 ### d
 Nilai Kritikal 
+```R
+qchisq(p = 0.05, df = 2, lower.tail = FALSE)
+```
+[10]
+
 ### e
 Keputusan 
+_Teori keputusan adalah teori formal pengambilan keputusan di bawah ketidakpastian._
+
 ### f
 Kesimpulan
+_Kesimpulan yang dapat diambil adalah bahwa perbedaan rata-rata yang terjadi tidak ada jika dilihat dari uji statistik dan akan ada namun tidak signifikan jika dipengaruhi nilai kritikal._
+
+## Nomer 4
+Seorang Peneliti sedang meneliti spesies dari kucing di ITS . Dalam penelitiannya ia mengumpulkan data tiga spesies kucing yaitu kucing oren, kucing hitam dan kucing putih dengan panjangnya masing-masing. Jika : 
+diketahui dataset https://intip.in/datasetprobstat1 H0 : Tidak ada perbedaan panjang antara ketiga spesies atau rata-rata panjangnya sama 
+Maka Kerjakan atau Carilah: 
+### a
+Buatlah masing masing jenis spesies menjadi 3 subjek "Grup" (grup 1,grup 2,grup 3). Lalu Gambarkan plot kuantil normal untuk setiap kelompok dan lihat apakah ada outlier utama dalam homogenitas varians. 
+```R
+data4 <-read.table(url("https://rstatisticsandresearch.weebly.com/uploads/1/0/2/6/1026585/onewayanova.txt%22),header    = TRUE, check.names = TRUE)
+    byGroup <- split(data4, data4$Group)
+    byGroup
+    group1 <- byGroup$`1`
+    group2 <- byGroup$`2`
+    group3 <- byGroup$`3`
+```
+[11]
+
+### b
+carilah atau periksalah Homogeneity of variances nya , Berapa nilai p yang didapatkan? , Apa hipotesis dan kesimpulan yang dapat diambil ? 
+```R
+hist(group1$Length, xlim = c(16, 20))
+hist(group2$Length, xlim = c(16, 20))
+hist(group3$Length, xlim = c(16, 20))
+```
+### c
+Untuk uji ANOVA (satu arah), buatlah model linier dengan Panjang versus Grup dan beri nama model tersebut model 1. 
+```R
+bartlett.test(data4$Length, data4$Group)
+```
+### d
+Dari Hasil Poin C, Berapakah nilai-p ? , Apa yang dapat Anda simpulkan dari H0? 
+```R
+model1 <- lm(data4$Length, data4$Group)
+summary(model1)
+```
+### e
+Verifikasilah jawaban model 1 dengan Post-hoc test Tukey HSD, dari nilai p yang didapatkan apakah satu jenis kucing lebih panjang dari yang lain? Jelaskan. 
+```R
+av <- aov(Length ~ factor(Group), data = data4)
+TukeyHSD(av)
+```
+### f
+Visualisasikan data dengan ggplot2
+```R
+library(ggplot2)
+ggplot(data4, aes(x = Group, y = Length)) + geom_boxplot(fill = "grey80", colour = "black") + 
+scale_x_discrete() + xlab("Treatment Group") +  ylab("Length (cm)")
+```
+
+## Nomer 5
+Data yang digunakan merupakan hasil eksperimen yang dilakukan untuk mengetahui pengaruh suhu operasi (100˚C, 125˚C dan 150˚C) dan tiga jenis kaca pelat muka (A, B dan C) pada keluaran cahaya tabung osiloskop. Percobaan dilakukan sebanyak 27 kali dan didapat data sebagai berikut: Data Hasil Eksperimen. Dengan data tersebut: 
+```R
+install.packages("multcompView")
+install.packages("ggplot2")
+install.packages("readr")
+install.packages("dplyr")
+library(readr)
+library(ggplot2)
+library(multcompView)
+library(dplyr)
+```
+
+### a
+Buatlah plot sederhana untuk visualisasi data 
+```R
+GTL <- read_csv("GTL.csv")
+head(GTL)
+str(GTL)
+    
+qplot(x = Temp, y = Light, geom = "point", data = GTL) + facet_grid(.~Glass, labeller = label_both)
+```
+### b
+Lakukan uji ANOVA dua arah 
+```R
+GTL$Glass <- as.factor(GTL$Glass)
+GTL$Temp_Factor <- as.factor(GTL$Temp)
+str(GTL)
+    
+anova <- aov(Light ~ Glass*Temp_Factor, data = GTL)
+summary(anova)
+```
+### c
+Tampilkan tabel dengan mean dan standar deviasi keluaran cahaya untuk setiap perlakuan (kombinasi kaca pelat muka dan suhu operasi) 
+```R
+dataTable <- group_by(GTL, Glass, Temp) %>% summarise(mean = mean(Light), sd = sd(Light)) %>% arrange(desc(mean))
+print(dataTable)
+```
+### d
+Lakukan uji Tukey 
+```R
+tukeyTest <- TukeyHSD(anova)
+print(tukeyTest)
+```
+### e
+Gunakan compact letter display untuk menunjukkan perbedaan signifikan antara uji Anova dan uji Tukey
+```R
+tukeyTest.cldData <- multcompLetters4(anova, tukeyTest)
+print(tukeyTest.cldData)
+    
+cld <- as.data.frame.list(tukeyTest.cldData$`Glass:Temp_Factor`)
+dataTable$tukeyTest <- cld$Letters
+print(dataTable)
+
+write.csv("GTL_summary.csv")
+```
 
